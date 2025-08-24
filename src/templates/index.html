@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predictor de Tipos de Estrellas - Dataset Real</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .star-gradient {
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 50%, #4a5568 100%);
+        }
+        .glow {
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+        .star-pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .result-card {
+            transition: all 0.3s ease;
+        }
+        
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            outline: none;
+            margin: 10px 0;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            border: 2px solid #3b82f6;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s ease;
+        }
+        
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+        
+        .value-display {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 4px;
+            font-size: 0.8rem;
+            color: #9ca3af;
+        }
+        
+        .parameter-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .data-point {
+            transition: all 0.3s ease;
+        }
+        
+        .data-point:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body class="star-gradient min-h-screen text-white">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="text-center mb-12">
+            <div class="flex justify-center mb-4">
+                <div class="w-16 h-16 bg-yellow-400 rounded-full star-pulse glow"></div>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-yellow-400 to-red-500 bg-clip-text text-transparent mb-4">
+                Predictor de Estrellas
+            </h1>
+            <p class="text-xl text-gray-300 max-w-2xl mx-auto">
+                Basado en dataset real de características estelares
+            </p>
+            <p class="text-sm text-gray-400 mt-2">
+                Temperature (K) • Luminosity(L/Lo) • Radius(R/Ro) • Absolute magnitude(Mv)
+            </p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+            <!-- Formulario con sliders -->
+            <div class="bg-gray-800 rounded-2xl p-6 glow">
+                <h2 class="text-2xl font-semibold mb-6 text-center">
+                    <i class="fas fa-sliders-h mr-2 text-blue-400"></i>
+                    Parámetros Estelares
+                </h2>
+                
+                <form id="predictionForm" class="space-y-6">
+                    <!-- Temperatura -->
+                    <div class="parameter-card">
+                        <div class="flex items-center justify-between mb-4">
+                            <label class="text-lg font-semibold text-gray-300">
+                                <i class="fas fa-temperature-high mr-2 text-red-400"></i>
+                                Temperature (K)
+                            </label>
+                            <span class="value-display" id="tempValue">{{ default_values.temperatura|int }} K</span>
+                        </div>
+                        <input type="range" id="temperatura" class="slider" 
+                               min="2000" max="50000" value="{{ default_values.temperatura }}" step="100">
+                        <div class="slider-labels">
+                            <span>2,000 K</span>
+                            <span>50,000 K</span>
+                        </div>
+                        <p class="text-sm text-gray-400 mt-2">Enanas rojas frías ↔ Supergigantes azules calientes</p>
+                    </div>
+
+                    <!-- Luminosidad -->
+                    <div class="parameter-card">
+                        <div class="flex items-center justify-between mb-4">
+                            <label class="text-lg font-semibold text-gray-300">
+                                <i class="fas fa-sun mr-2 text-yellow-400"></i>
+                                Luminosity(L/Lo)
+                            </label>
+                            <span class="value-display" id="lumValue">{{ default_values.luminosidad }} L☉</span>
+                        </div>
+                        <input type="range" id="luminosidad" class="slider" 
+                               min="0.0001" max="1000000" value="{{ default_values.luminosidad }}" step="0.1">
+                        <div class="slider-labels">
+                            <span>0.0001 L☉</span>
+                            <span>1,000,000 L☉</span>
+                        </div>
+                        <p class="text-sm text-gray-400 mt-2">Estrellas débiles ↔ Supergigantes hiper-luminosas</p>
+                    </div>
+
+                    <!-- Radio -->
+                    <div class="parameter-card">
+                        <div class="flex items-center justify-between mb-4">
+                            <label class="text-lg font-semibold text-gray-300">
+                                <i class="fas fa-expand mr-2 text-green-400"></i>
+                                Radius(R/Ro)
+                            </label>
+                            <span class="value-display" id="radValue">{{ default_values.radio }} R☉</span>
+                        </div>
+                        <input type="range" id="radio" class="slider" 
+                               min="0.1" max="100" value="{{ default_values.radio }}" step="0.1">
+                        <div class="slider-labels">
+                            <span>0.1 R☉</span>
+                            <span>100 R☉</span>
+                        </div>
+                        <p class="text-sm text-gray-400 mt-2">Enanas ↔ Supergigantes</p>
+                    </div>
+
+                    <!-- Magnitud Absoluta -->
+                    <div class="parameter-card">
+                        <div class="flex items-center justify-between mb-4">
+                            <label class="text-lg font-semibold text-gray-300">
+                                <i class="fas fa-chart-line mr-2 text-purple-400"></i>
+                                Absolute magnitude(Mv)
+                            </label>
+                            <span class="value-display" id="magValue">{{ default_values.magnitud_absoluta }} Mv</span>
+                        </div>
+                        <input type="range" id="magnitud_absoluta" class="slider" 
+                               min="-12" max="20" value="{{ default_values.magnitud_absoluta }}" step="0.1">
+                        <div class="slider-labels">
+                            <span>-12 Mv</span>
+                            <span>20 Mv</span>
+                        </div>
+                        <p class="text-sm text-gray-400 mt-2">Muy brillantes ↔ Muy tenues</p>
+                    </div>
+
+                    <button type="submit" 
+                            class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105">
+                        <i class="fas fa-stars mr-2"></i>
+                        Predecir Clase Espectral
+                    </button>
+                </form>
+
+                <!-- Auto-predicción en tiempo real -->
+                <div class="mt-6 text-center">
+                    <label class="inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="autoPredict" class="sr-only" checked>
+                        <div class="relative w-11 h-6 bg-gray-600 rounded-full transition-colors duration-200">
+                            <div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200"></div>
+                        </div>
+                        <span class="ml-3 text-sm text-gray-300">Predicción automática</span>
+                    </label>
+                    <p class="text-xs text-gray-400 mt-1">La predicción se actualiza automáticamente al mover los controles</p>
+                </div>
+
+                <!-- Datos de ejemplo del dataset -->
+                <div class="mt-8">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-300">
+                        <i class="fas fa-database mr-2 text-blue-400"></i>
+                        Datos de Ejemplo del Dataset
+                    </h3>
+                    <div class="space-y-2" id="datasetExamples">
+                        <!-- Los datos se cargarán dinámicamente -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resultados -->
+            <div class="space-y-6">
+                <!-- Tarjeta de resultados -->
+                <div id="resultCard" class="result-card bg-gray-800 rounded-2xl p-6 glow">
+                    <h2 class="text-2xl font-semibold mb-6 text-center">
+                        <i class="fas fa-chart-bar mr-2 text-green-400"></i>
+                        Resultado de la Predicción
+                    </h2>
+                    
+                    <div class="text-center mb-6">
+                        <div id="starIcon" class="w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl relative">
+                            ⭐
+                            <div class="absolute inset-0 rounded-full opacity-20" id="starGlow"></div>
+                        </div>
+                        <h3 id="predictionType" class="text-3xl font-bold mb-2">G - Estrella Tipo G</h3>
+                        <p id="predictionDesc" class="text-gray-300">Estrellas amarillas como el Sol</p>
+                    </div>
+
+                    <div class="bg-gray-700 rounded-lg p-4 mb-4">
+                        <h4 class="font-semibold mb-3 text-gray-300">Parámetros ingresados:</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <span class="text-sm text-gray-400">Temperature:</span>
+                                <p id="inputTemp" class="font-semibold">{{ default_values.temperatura|int }} K</p>
+                            </div>
+                            <div>
+                                <span class="text-sm text-gray-400">Luminosity:</span>
+                                <p id="inputLum" class="font-semibold">{{ default_values.luminosidad }} L☉</p>
+                            </div>
+                            <div>
+                                <span class="text-sm text-gray-400">Radius:</span>
+                                <p id="inputRad" class="font-semibold">{{ default_values.radio }} R☉</p>
+                            </div>
+                            <div>
+                                <span class="text-sm text-gray-400">Abs Magnitude:</span>
+                                <p id="inputMag" class="font-semibold">{{ default_values.magnitud_absoluta }} Mv</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-700 rounded-lg p-4">
+                        <h4 class="font-semibold mb-3 text-gray-300">Información Estelar:</h4>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Clase Espectral:</span>
+                                <span id="spectralClass" class="font-semibold">G</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Color:</span>
+                                <span id="starColor" class="font-semibold">Amarillo</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Rango de Temp:</span>
+                                <span id="tempRange" class="font-semibold text-sm">5,200 - 6,000 K</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Tipo Estelar:</span>
+                                <span id="starType" class="font-semibold">Secuencia Principal</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Información de tipos de estrellas -->
+                <div class="bg-gray-800 rounded-2xl p-6 glow">
+                    <h2 class="text-2xl font-semibold mb-6 text-center">
+                        <i class="fas fa-info-circle mr-2 text-blue-400"></i>
+                        Clasificación Espectral
+                    </h2>
+                    
+                    <div class="space-y-4" id="starTypesInfo">
+                        {% for tipo, info in star_types_info.items() %}
+                        <div class="flex items-center space-x-4 p-4 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors cursor-pointer data-point"
+                             onclick="loadExample('{{ tipo }}')">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background-color: {{ info.color_hex }}; box-shadow: 0 0 15px {{ info.color_hex }}">
+                                <span class="text-xs font-bold text-white">{{ tipo }}</span>
+                            </div>
+                            <div class="flex-1">
+                                <div class="font-semibold">{{ info.nombre }}</div>
+                                <div class="text-sm text-gray-400">{{ info.color_estrella }} • {{ info.temperatura_min|int }}-{{ info.temperatura_max|int }}K</div>
+                            </div>
+                            <div class="text-xs text-gray-500 bg-gray-600 px-2 py-1 rounded">
+                                {{ info.clase_espectral }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center mt-16 pt-8 border-t border-gray-700">
+            <p class="text-gray-400">
+                Sistema de predicción basado en dataset real de características estelares
+            </p>
+            <p class="text-gray-500 text-sm mt-2">
+                Temperature (K) • Luminosity(L/Lo) • Radius(R/Ro) • Absolute magnitude(Mv) • Spectral Class
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // Datos pasados desde Flask
+        const starTypesInfo = {{ star_types_info|tojson }};
+        const defaultValues = {{ default_values|tojson }};
+
+        // Cargar datos al iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDatasetExamples();
+            updateSliderValues();
+            if (document.getElementById('autoPredict').checked) {
+                makePrediction();
+            }
+        });
+
+        // Cargar ejemplos del dataset real
+        async function loadDatasetExamples() {
+            try {
+                const response = await fetch('/datos_originales');
+                const datos = await response.json();
+                
+                const container = document.getElementById('datasetExamples');
+                container.innerHTML = '';
+                
+                datos.slice(0, 5).forEach((estrella, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'bg-gray-700 p-3 rounded-lg data-point hover:bg-gray-600 transition-colors cursor-pointer';
+                    div.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-4 h-4 rounded-full" style="background-color: ${getColorForSpectralClass(estrella['Spectral Class'])}"></div>
+                                <span class="text-sm font-semibold">${estrella['Spectral Class']}</span>
+                            </div>
+                            <div class="text-xs text-gray-400">
+                                ${Math.round(estrella['Temperature (K)'])}K • ${estrella['Luminosity(L/Lo)']}L☉
+                            </div>
+                        </div>
+                    `;
+                    div.onclick = () => {
+                        document.getElementById('temperatura').value = estrella['Temperature (K)'];
+                        document.getElementById('luminosidad').value = estrella['Luminosity(L/Lo)'];
+                        document.getElementById('radio').value = estrella['Radius(R/Ro)'];
+                        document.getElementById('magnitud_absoluta').value = estrella['Absolute magnitude(Mv)'];
+                        updateSliderValues();
+                        makePrediction();
+                    };
+                    container.appendChild(div);
+                });
+            } catch (error) {
+                console.error('Error loading dataset examples:', error);
+            }
+        }
+
+        // Función para obtener color según clase espectral
+        function getColorForSpectralClass(spectralClass) {
+            const colorMap = {
+                'O': '#64b5f6', 'B': '#90caf9', 'A': '#e3f2fd', 
+                'F': '#f8f9fa', 'G': '#ffd54f', 'K': '#ffa726', 'M': '#ff6b6b'
+            };
+            return colorMap[spectralClass] || '#cccccc';
+        }
+
+        // Actualizar valores de los sliders en tiempo real
+        function updateSliderValues() {
+            const sliders = ['temperatura', 'luminosidad', 'radio', 'magnitud_absoluta'];
+            const displays = ['tempValue', 'lumValue', 'radValue', 'magValue'];
+            const resultDisplays = ['inputTemp', 'inputLum', 'inputRad', 'inputMag'];
+            
+            sliders.forEach((sliderId, index) => {
+                const slider = document.getElementById(sliderId);
+                const display = document.getElementById(displays[index]);
+                const resultDisplay = document.getElementById(resultDisplays[index]);
+                
+                if (slider && display) {
+                    let value = Number(slider.value);
+                    if (sliderId === 'temperatura') {
+                        display.textContent = value.toLocaleString() + ' K';
+                        resultDisplay.textContent = value.toLocaleString() + ' K';
+                    } else if (sliderId === 'luminosidad') {
+                        display.textContent = value.toLocaleString() + ' L☉';
+                        resultDisplay.textContent = value.toLocaleString() + ' L☉';
+                    } else if (sliderId === 'radio') {
+                        display.textContent = value.toLocaleString() + ' R☉';
+                        resultDisplay.textContent = value.toLocaleString() + ' R☉';
+                    } else {
+                        display.textContent = value + ' Mv';
+                        resultDisplay.textContent = value + ' Mv';
+                    }
+                }
+            });
+        }
+
+        // Cargar ejemplo específico
+        function loadExample(starType) {
+            const info = starTypesInfo[starType];
+            if (info) {
+                document.getElementById('temperatura').value = (info.temperatura_min + info.temperatura_max) / 2;
+                document.getElementById('luminosidad').value = (info.luminosidad_min + info.luminosidad_max) / 2;
+                document.getElementById('radio').value = (info.radio_min + info.radio_max) / 2;
+                document.getElementById('magnitud_absoluta').value = (info.magnitud_min + info.magnitud_max) / 2;
+                updateSliderValues();
+                makePrediction();
+            }
+        }
+
+        // Event listeners para los sliders
+        const sliders = document.querySelectorAll('.slider');
+        sliders.forEach(slider => {
+            slider.addEventListener('input', function() {
+                updateSliderValues();
+                if (document.getElementById('autoPredict').checked) {
+                    makePrediction();
+                }
+            });
+            
+            slider.addEventListener('change', function() {
+                updateSliderValues();
+                if (!document.getElementById('autoPredict').checked) {
+                    makePrediction();
+                }
+            });
+        });
+
+        // Toggle para predicción automática
+        document.getElementById('autoPredict').addEventListener('change', function() {
+            if (this.checked) {
+                makePrediction();
+            }
+        });
+
+        // Manejar el formulario
+        document.getElementById('predictionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            makePrediction();
+        });
+
+        // Función para hacer predicción
+        async function makePrediction() {
+            const formData = {
+                temperatura: document.getElementById('temperatura').value,
+                luminosidad: document.getElementById('luminosidad').value,
+                radio: document.getElementById('radio').value,
+                magnitud_absoluta: document.getElementById('magnitud_absoluta').value
+            };
+
+            try {
+                const response = await fetch('/predecir', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+                
+                if (result.exito) {
+                    showPredictionResult(result);
+                } else {
+                    console.error('Error:', result.error);
+                    alert('Error al realizar la predicción: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error de conexión:', error);
+            }
+        }
+
+        // Función para mostrar resultados
+        function showPredictionResult(result) {
+            const resultCard = document.getElementById('resultCard');
+            const starIcon = document.getElementById('starIcon');
+            const predictionType = document.getElementById('predictionType');
+            const predictionDesc = document.getElementById('predictionDesc');
+            const starGlow = document.getElementById('starGlow');
+            
+            // Actualizar estilos según el tipo de estrella
+            starIcon.style.backgroundColor = result.color_hex;
+            starGlow.style.backgroundColor = result.color_hex;
+            starIcon.style.boxShadow = `0 0 40px ${result.color_hex}60`;
+            predictionType.textContent = result.nombre_estrella;
+            predictionType.style.color = result.color_hex;
+            predictionDesc.textContent = result.descripcion;
+            
+            // Asegurar que la tarjeta de resultados sea visible
+            resultCard.classList.remove('hidden');
+            resultCard.classList.add('star-pulse');
+            
+            // Actualizar información de la estrella
+            document.getElementById('spectralClass').textContent = result.clase_espectral;
+            document.getElementById('starColor').textContent = result.color_estrella;
+            document.getElementById('tempRange').textContent = result.rango_temperatura;
+            document.getElementById('starType').textContent = result.prediccion;
+        }
+    </script>
+</body>
+</html>
