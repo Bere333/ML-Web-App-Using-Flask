@@ -7,3 +7,8 @@ data/
 *.csv
 *.xlsx
 *.xls
+
+# Models
+models/
+*.pkl
+*.joblib
