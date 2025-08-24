@@ -164,49 +164,31 @@ def index():
 @app.route('/predecir', methods=['POST'])
 def predecir():
     try:
-        datau = pd.read_csv('../data/processed/data_stars_processed.csv')
-        data = datau.to_json(orient='records')
+        # Obtener la data JSON del cuerpo de la solicitud
+        data = request.get_json()
         
-        # Validar datos de entrada
-        temperatura = float(data['temperatura'])
-        luminosidad = float(data['luminosidad'])
-        radio = float(data['radio'])
-        magnitud_absoluta = float(data['magnitud_absoluta'])
-        color_estrella = float(data['luminosidad']),
-        clase_espectral = float(data['luminosidad'])
+        # Verificar que la data sea una lista
+        if not isinstance(data, list):
+            return jsonify({'error': 'Se esperaba una lista de registros'}), 400
         
-        # Crear array de características en el orden correcto
-        features = np.array([[temperatura, luminosidad, radio, magnitud_absoluta, color_estrella, clase_espectral]])
+        # Convertir la data a un DataFrame
+        df = pd.DataFrame(data)
         
-        # Hacer predicción
-        prediccion = model.predict(features)[0]
+        # Asegúrate de que las columnas estén en el orden correcto
+        features = df[['Temperature (K)', 'Luminosity(L/Lo)', 'Radius(R/Ro)', 'Absolute magnitude(Mv)', 'Star color', 'Spectral Class']]
         
-        # Obtener información del tipo de estrella
-        info_estrella = star_types_info.get(prediccion, {
-            'nombre': 'Desconocido', 
-            'color_hex': '#cccccc', 
-            'descripcion': 'Tipo no identificado',
-            'color_estrella': 'Desconocido',
-            'clase_espectral': '?'
-        })
+        # Realizar predicciones
+        predicciones = model.predict(features)
         
-        return jsonify({
-            'exito': True,
-            'prediccion': prediccion,
-            'nombre_estrella': info_estrella['nombre'],
-            'color_hex': info_estrella['color_hex'],
-            'descripcion': info_estrella['descripcion'],
-            'color_estrella': info_estrella['color_estrella'],
-            'clase_espectral': info_estrella['clase_espectral'],
-            'rango_temperatura': f"{info_estrella['temperatura_min']:,} - {info_estrella['temperatura_max']:,} K".replace(',', '.'),
-            'rango_magnitud': f"{info_estrella['magnitud_min']} a {info_estrella['magnitud_max']} Mv"
-        })
+        # Agregar las predicciones al DataFrame
+        df['Predicted Spectral Class'] = predicciones
+        # Convertir el DataFrame a JSON para la respuesta
+        result = df.to_json(orient='records')
+        
+        return jsonify(result), 200
         
     except Exception as e:
-        return jsonify({
-            'exito': False,
-            'error': str(e)
-        })
+        return jsonify({'error': str(e)}), 400
 
 @app.route('/ejemplos')
 def obtener_ejemplos():

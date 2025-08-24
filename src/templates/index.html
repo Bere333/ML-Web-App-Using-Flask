@@ -458,32 +458,27 @@
 
         // Función para hacer predicción
         async function makePrediction() {
-            const formData = {
-                temperatura: document.getElementById('temperatura').value,
-                luminosidad: document.getElementById('luminosidad').value,
-                radio: document.getElementById('radio').value,
-                magnitud_absoluta: document.getElementById('magnitud_absoluta').value
-            };
-
+            const data = [
+                {"Temperature (K)": 3068, "Luminosity(L/Lo)": 0.0024, "Radius(R/Ro)": 0.17, "Absolute magnitude(Mv)": 16.12, "Star Color": "Rojo", "Spectral Class": "M"},
+                {"Temperature (K)": 5940, "Luminosity(L/Lo)": 1.2, "Radius(R/Ro)": 1.02, "Absolute magnitude(Mv)": 4.83, "Star Color": "Amarillo", "Spectral Class": "G"},
+                {"Temperature (K)": 10000, "Luminosity(L/Lo)": 25, "Radius(R/Ro)": 2.5, "Absolute magnitude(Mv)": 1.5, "Star Color": "Blanco", "Spectral Class": "A"},
+                {"Temperature (K)": 20000, "Luminosity(L/Lo)": 3000, "Radius(R/Ro)": 6.6, "Absolute magnitude(Mv)": -5.0, "Star Color": "Azul", "Spectral Class": "B"},
+                {"Temperature (K)": 40000, "Luminosity(L/Lo)": 1000000, "Radius(R/Ro)": 15, "Absolute magnitude(Mv)": -10.0, "Star Color": "Azul", "Spectral Class": "O"},
+                {"Temperature (K)": 3042, "Luminosity(L/Lo)": 0.0005, "Radius(R/Ro)": 0.1542, "Absolute magnitude(Mv)": 16.6},
+            // Agrega más objetos según sea necesario
+            ];
             try {
                 const response = await fetch('/predecir', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(formData)
+                    body: JSON.stringify(data)
                 });
-
                 const result = await response.json();
-                
-                if (result.exito) {
-                    showPredictionResult(result);
-                } else {
-                    console.error('Error:', result.error);
-                    alert('Error al realizar la predicción: ' + result.error);
-                }
+                console.log(result);
             } catch (error) {
-                console.error('Error de conexión:', error);
+                console.error('Error al enviar datos:', error);
             }
         }
 
